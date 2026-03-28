@@ -4,20 +4,20 @@ function App() {
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
 
-  useEffect(() => {
+  const fetchData = () => {
     fetch("http://localhost:3001/inventory")
       .then((res) => res.json())
-      .then((data) => {
-        setItems(data.items);
-      })
+      .then((data) => setItems(data.items))
       .catch((err) => console.error(err));
-  }, []);
 
-  useEffect(() => {
     fetch("http://localhost:3001/inventory/summary")
       .then((res) => res.json())
       .then((data) => setSummary(data))
       .catch((err) => console.error(err));
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   const getStatusColor = (status) => {
@@ -25,6 +25,24 @@ function App() {
     if (status === "Low Stock") return "orange";
     if (status === "Out of Stock") return "red";
     return "black";
+  };
+
+  const handleRestock = (slotId) => {
+    fetch("http://localhost:3001/inventory/restock", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        slotId,
+        quantityAdded: 1
+      })
+    })
+      .then((res) => res.json())
+      .then(() => {
+        fetchData();
+      })
+      .catch((err) => console.error(err));
   };
 
   return (
@@ -36,7 +54,24 @@ function App() {
         minHeight: "100vh"
       }}
     >
-      <h1 style={{ marginBottom: "2rem" }}>UMBC Vending Machine Inventory Dashboard</h1>
+      <h1 style={{ marginBottom: "1rem" }}>
+        UMBC Vending Machine Inventory Dashboard
+      </h1>
+
+      <button
+        onClick={fetchData}
+        style={{
+          marginBottom: "2rem",
+          padding: "0.5rem 1rem",
+          borderRadius: "6px",
+          border: "none",
+          backgroundColor: "#007bff",
+          color: "white",
+          cursor: "pointer"
+        }}
+      >
+        Refresh Data
+      </button>
 
       {summary && (
         <div
@@ -118,6 +153,21 @@ function App() {
                 {item.status}
               </span>
             </p>
+
+            <button
+              onClick={() => handleRestock(item.slotId)}
+              style={{
+                marginTop: "1rem",
+                padding: "0.5rem 1rem",
+                borderRadius: "6px",
+                border: "none",
+                backgroundColor: "#28a745",
+                color: "white",
+                cursor: "pointer"
+              }}
+            >
+              Restock +1
+            </button>
           </div>
         ))}
       </div>
