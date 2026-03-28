@@ -5,6 +5,7 @@ function App() {
   const [summary, setSummary] = useState(null);
   const [restockAmounts, setRestockAmounts] = useState({});
   const [message, setMessage] = useState("");
+  const [filter, setFilter] = useState("All");
 
   const fetchData = () => {
     fetch("http://localhost:3001/inventory")
@@ -98,6 +99,20 @@ function App() {
       });
   };
 
+  const filteredItems = items.filter((item) => {
+    if (filter === "All") return true;
+    return item.status === filter;
+  });
+
+  const getFilterButtonStyle = (buttonFilter) => ({
+    padding: "0.5rem 1rem",
+    borderRadius: "6px",
+    border: "none",
+    cursor: "pointer",
+    backgroundColor: filter === buttonFilter ? "#007bff" : "#e0e0e0",
+    color: filter === buttonFilter ? "white" : "#333"
+  });
+
   return (
     <div
       style={{
@@ -111,20 +126,26 @@ function App() {
         UMBC Vending Machine Inventory Dashboard
       </h1>
 
-      <button
-        onClick={fetchData}
-        style={{
-          marginBottom: "1rem",
-          padding: "0.5rem 1rem",
-          borderRadius: "6px",
-          border: "none",
-          backgroundColor: "#007bff",
-          color: "white",
-          cursor: "pointer"
-        }}
-      >
-        Refresh Data
-      </button>
+      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+        <button onClick={fetchData} style={getFilterButtonStyle("Refresh")}>
+          Refresh Data
+        </button>
+
+        <button onClick={() => setFilter("All")} style={getFilterButtonStyle("All")}>
+          All Items
+        </button>
+
+        <button onClick={() => setFilter("Low Stock")} style={getFilterButtonStyle("Low Stock")}>
+          Low Stock
+        </button>
+
+        <button
+          onClick={() => setFilter("Out of Stock")}
+          style={getFilterButtonStyle("Out of Stock")}
+        >
+          Out of Stock
+        </button>
+      </div>
 
       {message && (
         <div
@@ -221,7 +242,7 @@ function App() {
           gap: "1rem"
         }}
       >
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <div
             key={item.slotId}
             style={{
