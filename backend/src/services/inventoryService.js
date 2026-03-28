@@ -20,6 +20,10 @@ exports.getInventorySummary = () => {
   };
 };
 
+exports.getInventoryItemBySlotId = (slotId) => {
+  return inventoryItems.find((item) => item.slotId === slotId);
+};
+
 exports.restockInventoryItem = (slotId, quantityAdded) => {
   const item = inventoryItems.find((inventoryItem) => inventoryItem.slotId === slotId);
 

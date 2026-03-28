@@ -1,6 +1,7 @@
 const {
   getAllInventory,
   getInventorySummary,
+  getInventoryItemBySlotId,
   restockInventoryItem
 } = require("../services/inventoryService");
 
@@ -16,6 +17,19 @@ exports.getSummary = (req, res) => {
   const summary = getInventorySummary();
 
   res.json(summary);
+};
+
+exports.getInventoryItem = (req, res) => {
+  const { slotId } = req.params;
+  const item = getInventoryItemBySlotId(slotId);
+
+  if (!item) {
+    return res.status(404).json({
+      error: "Item not found"
+    });
+  }
+
+  res.json(item);
 };
 
 exports.restockItem = (req, res) => {
