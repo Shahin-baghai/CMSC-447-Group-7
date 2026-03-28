@@ -19,3 +19,23 @@ exports.getInventorySummary = () => {
     outOfStockItems
   };
 };
+
+exports.restockInventoryItem = (slotId, quantityAdded) => {
+  const item = inventoryItems.find((inventoryItem) => inventoryItem.slotId === slotId);
+
+  if (!item) {
+    return { error: "Item not found" };
+  }
+
+  item.quantity += quantityAdded;
+
+  if (item.quantity <= 0) {
+    item.status = "Out of Stock";
+  } else if (item.quantity <= 3) {
+    item.status = "Low Stock";
+  } else {
+    item.status = "In Stock";
+  }
+
+  return item;
+};
