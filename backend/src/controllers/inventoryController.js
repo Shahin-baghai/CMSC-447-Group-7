@@ -21,6 +21,24 @@ exports.getSummary = (req, res) => {
 exports.restockItem = (req, res) => {
   const { slotId, quantityAdded } = req.body;
 
+  if (!slotId || quantityAdded === undefined) {
+    return res.status(400).json({
+      error: "slotId and quantityAdded are required"
+    });
+  }
+
+  if (typeof quantityAdded !== "number") {
+    return res.status(400).json({
+      error: "quantityAdded must be a number"
+    });
+  }
+
+  if (quantityAdded <= 0) {
+    return res.status(400).json({
+      error: "quantityAdded must be greater than 0"
+    });
+  }
+
   const updatedItem = restockInventoryItem(slotId, quantityAdded);
 
   if (updatedItem.error) {
