@@ -152,41 +152,64 @@ function App() {
         >
           <div
             style={{
-              backgroundColor: "white",
+              backgroundColor: "#ffffff",
               padding: "1rem",
-              borderRadius: "10px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              minWidth: "180px"
+              borderRadius: "12px",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+              minWidth: "180px",
+              borderTop: "4px solid #007bff"
             }}
           >
-            <h3>Total Items</h3>
-            <p>{summary.totalItems}</p>
+            <h3 style={{ marginBottom: "0.5rem" }}>Total Items</h3>
+            <p style={{ fontSize: "1.5rem", fontWeight: "bold", margin: 0 }}>
+              {summary.totalItems}
+            </p>
           </div>
 
           <div
             style={{
-              backgroundColor: "white",
+              backgroundColor: "#fff3cd",
               padding: "1rem",
-              borderRadius: "10px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              minWidth: "180px"
+              borderRadius: "12px",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+              minWidth: "180px",
+              borderTop: "4px solid #ffc107"
             }}
           >
-            <h3>Low Stock</h3>
-            <p>{summary.lowStockItems}</p>
+            <h3 style={{ marginBottom: "0.5rem", color: "#856404" }}>Low Stock</h3>
+            <p
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+                margin: 0,
+                color: "#856404"
+              }}
+            >
+              {summary.lowStockItems}
+            </p>
           </div>
 
           <div
             style={{
-              backgroundColor: "white",
+              backgroundColor: "#f8d7da",
               padding: "1rem",
-              borderRadius: "10px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              minWidth: "180px"
+              borderRadius: "12px",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+              minWidth: "180px",
+              borderTop: "4px solid #dc3545"
             }}
           >
-            <h3>Out of Stock</h3>
-            <p>{summary.outOfStockItems}</p>
+            <h3 style={{ marginBottom: "0.5rem", color: "#721c24" }}>Out of Stock</h3>
+            <p
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+                margin: 0,
+                color: "#721c24"
+              }}
+            >
+              {summary.outOfStockItems}
+            </p>
           </div>
         </div>
       )}
