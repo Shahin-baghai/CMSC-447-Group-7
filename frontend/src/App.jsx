@@ -30,11 +30,32 @@ function App() {
     fetchData();
   }, []);
 
-  const getStatusColor = (status) => {
-    if (status === "In Stock") return "green";
-    if (status === "Low Stock") return "orange";
-    if (status === "Out of Stock") return "red";
-    return "black";
+  const getStatusStyles = (status) => {
+    if (status === "In Stock") {
+      return {
+        color: "#155724",
+        backgroundColor: "#d4edda"
+      };
+    }
+
+    if (status === "Low Stock") {
+      return {
+        color: "#856404",
+        backgroundColor: "#fff3cd"
+      };
+    }
+
+    if (status === "Out of Stock") {
+      return {
+        color: "#721c24",
+        backgroundColor: "#f8d7da"
+      };
+    }
+
+    return {
+      color: "#333",
+      backgroundColor: "#e9ecef"
+    };
   };
 
   const handleAmountChange = (slotId, value) => {
@@ -196,7 +217,15 @@ function App() {
             <p><strong>Backstock:</strong> {item.backstock}</p>
             <p>
               <strong>Status:</strong>{" "}
-              <span style={{ color: getStatusColor(item.status), fontWeight: "bold" }}>
+              <span
+                style={{
+                  ...getStatusStyles(item.status),
+                  fontWeight: "bold",
+                  padding: "0.3rem 0.7rem",
+                  borderRadius: "999px",
+                  display: "inline-block"
+                }}
+              >
                 {item.status}
               </span>
             </p>
