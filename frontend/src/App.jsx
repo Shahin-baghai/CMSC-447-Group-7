@@ -4,6 +4,7 @@ function App() {
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
   const [restockAmounts, setRestockAmounts] = useState({});
+  const [message, setMessage] = useState("");
 
   const fetchData = () => {
     fetch("http://localhost:3001/inventory")
@@ -13,7 +14,7 @@ function App() {
 
         const initialAmounts = {};
         data.items.forEach((item) => {
-          initialAmounts[item.slotId] = restockAmounts[item.slotId] || 1;
+          initialAmounts[item.slotId] = restockAmounts[item.slotId] ?? "";
         });
         setRestockAmounts(initialAmounts);
       })
@@ -47,7 +48,7 @@ function App() {
     const quantityAdded = Number(restockAmounts[slotId]);
 
     if (!quantityAdded || quantityAdded <= 0) {
-      alert("Please enter a valid restock amount greater than 0.");
+      setMessage("Please enter a valid restock amount greater than 0.");
       return;
     }
 
@@ -62,10 +63,18 @@ function App() {
       })
     })
       .then((res) => res.json())
-      .then(() => {
-        fetchData();
+      .then((data) => {
+        if (data.error) {
+          setMessage(`Error: ${data.error}`);
+        } else {
+          setMessage(`Successfully restocked ${slotId} by ${quantityAdded}.`);
+          fetchData();
+        }
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        setMessage("Something went wrong while restocking.");
+      });
   };
 
   return (
@@ -84,7 +93,7 @@ function App() {
       <button
         onClick={fetchData}
         style={{
-          marginBottom: "2rem",
+          marginBottom: "1rem",
           padding: "0.5rem 1rem",
           borderRadius: "6px",
           border: "none",
@@ -95,6 +104,21 @@ function App() {
       >
         Refresh Data
       </button>
+
+      {message && (
+        <div
+          style={{
+            marginBottom: "2rem",
+            padding: "0.75rem 1rem",
+            backgroundColor: "#ffffff",
+            borderLeft: "4px solid #007bff",
+            borderRadius: "6px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+          }}
+        >
+          {message}
+        </div>
+      )}
 
       {summary && (
         <div
@@ -180,8 +204,7 @@ function App() {
             <div style={{ marginTop: "1rem" }}>
               <input
                 type="number"
-                min="1"
-                value={restockAmounts[item.slotId] || 1}
+                value={restockAmounts[item.slotId] ?? ""}
                 onChange={(e) => handleAmountChange(item.slotId, e.target.value)}
                 style={{
                   width: "80px",
