@@ -3,11 +3,20 @@ import { useEffect, useState } from "react";
 function App() {
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [restockAmounts, setRestockAmounts] = useState({});
 
   const fetchData = () => {
     fetch("http://localhost:3001/inventory")
       .then((res) => res.json())
-      .then((data) => setItems(data.items))
+      .then((data) => {
+        setItems(data.items);
+
+        const initialAmounts = {};
+        data.items.forEach((item) => {
+          initialAmounts[item.slotId] = restockAmounts[item.slotId] || 1;
+        });
+        setRestockAmounts(initialAmounts);
+      })
       .catch((err) => console.error(err));
 
     fetch("http://localhost:3001/inventory/summary")
@@ -27,7 +36,21 @@ function App() {
     return "black";
   };
 
+  const handleAmountChange = (slotId, value) => {
+    setRestockAmounts((prev) => ({
+      ...prev,
+      [slotId]: value
+    }));
+  };
+
   const handleRestock = (slotId) => {
+    const quantityAdded = Number(restockAmounts[slotId]);
+
+    if (!quantityAdded || quantityAdded <= 0) {
+      alert("Please enter a valid restock amount greater than 0.");
+      return;
+    }
+
     fetch("http://localhost:3001/inventory/restock", {
       method: "POST",
       headers: {
@@ -35,7 +58,7 @@ function App() {
       },
       body: JSON.stringify({
         slotId,
-        quantityAdded: 1
+        quantityAdded
       })
     })
       .then((res) => res.json())
@@ -154,20 +177,35 @@ function App() {
               </span>
             </p>
 
-            <button
-              onClick={() => handleRestock(item.slotId)}
-              style={{
-                marginTop: "1rem",
-                padding: "0.5rem 1rem",
-                borderRadius: "6px",
-                border: "none",
-                backgroundColor: "#28a745",
-                color: "white",
-                cursor: "pointer"
-              }}
-            >
-              Restock +1
-            </button>
+            <div style={{ marginTop: "1rem" }}>
+              <input
+                type="number"
+                min="1"
+                value={restockAmounts[item.slotId] || 1}
+                onChange={(e) => handleAmountChange(item.slotId, e.target.value)}
+                style={{
+                  width: "80px",
+                  padding: "0.4rem",
+                  marginRight: "0.5rem",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc"
+                }}
+              />
+
+              <button
+                onClick={() => handleRestock(item.slotId)}
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: "6px",
+                  border: "none",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  cursor: "pointer"
+                }}
+              >
+                Restock
+              </button>
+            </div>
           </div>
         ))}
       </div>
