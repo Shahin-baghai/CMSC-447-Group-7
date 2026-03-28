@@ -1,4 +1,7 @@
-const { getAllInventory } = require("../services/inventoryService");
+const {
+  getAllInventory,
+  getInventorySummary
+} = require("../services/inventoryService");
 
 exports.getInventory = (req, res) => {
   const inventoryItems = getAllInventory();
@@ -6,4 +9,10 @@ exports.getInventory = (req, res) => {
   res.json({
     items: inventoryItems
   });
+};
+
+exports.getSummary = (req, res) => {
+  const summary = getInventorySummary();
+
+  res.json(summary);
 };

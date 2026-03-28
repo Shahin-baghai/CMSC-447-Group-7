@@ -1,8 +1,12 @@
 const express = require("express");
 const router = express.Router();
 
-const { getInventory } = require("../controllers/inventoryController");
+const {
+  getInventory,
+  getSummary
+} = require("../controllers/inventoryController");
 
 router.get("/", getInventory);
+router.get("/summary", getSummary);
 
 module.exports = router;
