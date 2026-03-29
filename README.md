@@ -3,7 +3,7 @@ Vending Machine Project
 
 ## GENERAL GIT WORKFLOW
 1. `git pull origin main` - fetches all commits from remote repo (keeps you updated)
-2. `git checkout -b <my_branch>` - creates a new branch and moves onto it (prevents you from directly editing main branch) OR
+2. `git checkout -b <my_branch>` - creates a new branch and moves onto it (prevents you from directly editing main branch) **OR**
    `git switch <my_branch>` - moves onto a branch that already exists in your local repo (also prevents you from directly editing main branch)
 4. Work on your code here
 5. `git add .` - stages changes (tracks your most recent changes)
