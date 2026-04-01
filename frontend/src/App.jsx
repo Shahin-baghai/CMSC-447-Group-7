@@ -1,9 +1,9 @@
 import React, { useState, useEffect, use } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import MachineInventory from './pages/MachineInventory';
 
 import NavBar from './components/NavBar/NavBar';
+import MachineInventory from './pages/MachineInventory';
 import BackstockInventory from './pages/BackstockInventory';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
