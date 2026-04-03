@@ -1,19 +1,7 @@
-const express = require("express");
-const cors = require("cors");
+require('dotenv').config();
+const app = require("./app");
 
-const app = express();
-const PORT = 3001;
-
-app.use(cors()); // 👈 THIS FIXES YOUR ISSUE
-app.use(express.json());
-
-const inventoryRoutes = require("./routes/inventoryRoutes");
-
-app.get("/", (req, res) => {
-  res.send("Backend is running");
-});
-
-app.use("/inventory", inventoryRoutes);
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
