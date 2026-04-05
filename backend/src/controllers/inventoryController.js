@@ -1,68 +1,39 @@
 const {
   getAllInventory,
-  getInventorySummary,
-  getInventoryItemBySlotId,
-  restockInventoryItem
+  getMachineInventorySummary,
+  getMachineSlot
 } = require("../services/inventoryService");
 
-exports.getInventory = (req, res) => {
-  const inventoryItems = getAllInventory();
-
-  res.json({
-    items: inventoryItems
-  });
+// gets all inventory items with product details and backstock
+exports.getAllInventory = async (req, res, next) => {
+  try {
+    const items = await getAllInventory();
+    res.json({ items });
+  } catch (err) {
+    next(err);
+  }
 };
 
-exports.getSummary = (req, res) => {
-  const summary = getInventorySummary();
-
-  res.json(summary);
+// gets summary of stock levels of items in machine (total items, low stock count, out of stock count, etc)
+exports.getMachineInventorySummary = async (req, res, next) => {
+  try {
+    const summary = await getMachineInventorySummary();
+    res.json(summary);
+  } catch (err) {
+    next(err);
+  }
 };
 
-exports.getInventoryItem = (req, res) => {
+// gets item in machine slot by slot ID
+exports.getMachineSlot = async (req, res, next) => {
   const { slotId } = req.params;
-  const item = getInventoryItemBySlotId(slotId);
-
-  if (!item) {
-    return res.status(404).json({
-      error: "Item not found"
-    });
+  try {
+    const slot = await getMachineSlot(slotId);
+    if (!slot) {
+      return res.status(404).json({ error: "Slot not found" });
+    }
+    res.json(slot);
+  } catch (err) {
+    next(err);
   }
-
-  res.json(item);
-};
-
-exports.restockItem = (req, res) => {
-  const { slotId, quantityAdded } = req.body;
-
-  if (!slotId || quantityAdded === undefined) {
-    return res.status(400).json({
-      error: "slotId and quantityAdded are required"
-    });
-  }
-
-  if (typeof quantityAdded !== "number") {
-    return res.status(400).json({
-      error: "quantityAdded must be a number"
-    });
-  }
-
-  if (quantityAdded <= 0) {
-    return res.status(400).json({
-      error: "quantityAdded must be greater than 0"
-    });
-  }
-
-  const updatedItem = restockInventoryItem(slotId, quantityAdded);
-
-  if (updatedItem.error) {
-    return res.status(404).json({
-      error: updatedItem.error
-    });
-  }
-
-  res.json({
-    message: "Item restocked successfully",
-    item: updatedItem
-  });
 };

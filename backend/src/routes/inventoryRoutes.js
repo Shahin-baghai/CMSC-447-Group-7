@@ -1,16 +1,13 @@
 const express = require("express");
 const router = express.Router();
-
-const {
-  getInventory,
-  getSummary,
-  getInventoryItem,
-  restockItem
+const { 
+  getAllInventory, 
+  getMachineInventorySummary, 
+  getMachineSlot 
 } = require("../controllers/inventoryController");
 
-router.get("/summary", getSummary);
-router.get("/:slotId", getInventoryItem);
-router.get("/", getInventory);
-router.post("/restock", restockItem);
+router.get("/", getAllInventory);
+router.get("/summary", getMachineInventorySummary);
+router.get("/:slotId", getMachineSlot);
 
 module.exports = router;

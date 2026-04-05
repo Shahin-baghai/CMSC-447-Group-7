@@ -29,7 +29,8 @@ CREATE TABLE backstock (
 -- Table to record purchase transactions
 CREATE TABLE purchases (
     purchase_id INT AUTO_INCREMENT PRIMARY KEY,
-    purchase_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date DATE NOT NULL,
+    time TIME NOT NULL,
     price DECIMAL(4,2) NOT NULL,
     -- Added functionality to map purchase price to products
     -- Ensures price is not being used as foreign key to products, but still allows for price tracking
