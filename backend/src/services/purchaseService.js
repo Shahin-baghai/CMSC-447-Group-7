@@ -1,4 +1,5 @@
 const db = require("../db");
+const { getEmployeeRestockLogs } = require("./restockLogService");
 
 // records a purchase by decrementing machine quantity and inserting purchase record
 exports.recordPurchase = async (price) => {
@@ -43,4 +44,79 @@ exports.recordPurchase = async (price) => {
   } finally {
     conn.release();
   }
+};
+
+// returns summary metrics and recent activity for reports dashboard
+exports.getPurchaseReport = async () => {
+  const [summaryRows] = await db.promise().query(`
+    SELECT
+      COUNT(*) AS totalPurchases,
+      COALESCE(SUM(price), 0) AS totalRevenue,
+      COUNT(CASE WHEN date = CURDATE() THEN 1 END) AS purchasesToday,
+      COALESCE(SUM(CASE WHEN date = CURDATE() THEN price ELSE 0 END), 0) AS revenueToday
+    FROM purchases
+  `);
+
+  const [topProducts] = await db.promise().query(`
+    SELECT
+      COALESCE(p.product_name, 'Unknown Product') AS productName,
+      COUNT(*) AS purchaseCount,
+      COALESCE(SUM(pc.price), 0) AS revenue
+    FROM purchases pc
+    LEFT JOIN products p ON pc.product_id = p.product_id
+    GROUP BY pc.product_id, p.product_name
+    ORDER BY purchaseCount DESC, revenue DESC
+    LIMIT 5
+  `);
+
+  const [recentPurchases] = await db.promise().query(`
+    SELECT
+      pc.purchase_id AS purchaseId,
+      COALESCE(p.product_name, 'Unknown Product') AS productName,
+      pc.price,
+      pc.date,
+      pc.time
+    FROM purchases pc
+    LEFT JOIN products p ON pc.product_id = p.product_id
+    ORDER BY pc.date DESC, pc.time DESC, pc.purchase_id DESC
+    LIMIT 10
+  `);
+
+  const [dailySales] = await db.promise().query(`
+    SELECT
+      date,
+      COUNT(*) AS purchaseCount,
+      COALESCE(SUM(price), 0) AS revenue
+    FROM purchases
+    GROUP BY date
+    ORDER BY date DESC
+    LIMIT 7
+  `);
+
+  const [inventoryAlerts] = await db.promise().query(`
+    SELECT
+      m.slot_id AS slotId,
+      p.product_name AS productName,
+      m.quantity,
+      m.capacity,
+      b.stock AS backstock
+    FROM machine m
+    LEFT JOIN products p ON m.product_id = p.product_id
+    LEFT JOIN backstock b ON m.product_id = b.product_id
+    WHERE p.product_name IS NOT NULL
+      AND (m.quantity = 0 OR m.quantity <= LEAST(3, GREATEST(1, FLOOR(m.capacity * 0.3))))
+    ORDER BY m.quantity ASC, b.stock ASC, m.slot_id ASC
+    LIMIT 10
+  `);
+
+  const employeeRestocks = await getEmployeeRestockLogs(20);
+
+  return {
+    summary: summaryRows[0],
+    topProducts,
+    recentPurchases,
+    dailySales,
+    inventoryAlerts,
+    employeeRestocks
+  };
 };

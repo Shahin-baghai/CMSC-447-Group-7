@@ -5,9 +5,10 @@ const {
   getBackstockItem, 
   restockBackstockItem 
 } = require("../controllers/backstockController");
+const { requireAuth, requireRole } = require("../middleware/authMiddleware");
 
-router.get("/", getBackstockInventory);
-router.get("/:productId", getBackstockItem);
-router.post("/restock", restockBackstockItem);
+router.get("/", requireAuth, requireRole("admin"), getBackstockInventory);
+router.get("/:productId", requireAuth, requireRole("admin"), getBackstockItem);
+router.post("/restock", requireAuth, requireRole("admin"), restockBackstockItem);
 
 module.exports = router;
