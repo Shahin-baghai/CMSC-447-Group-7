@@ -1,4 +1,4 @@
-const { recordPurchase } = require("../services/purchaseService");
+const { recordPurchase, getPurchaseReport } = require("../services/purchaseService");
 
 // records a purchase by decrementing machine quantity and inserting purchase record
 exports.recordPurchase = async (req, res, next) => {
@@ -8,6 +8,15 @@ exports.recordPurchase = async (req, res, next) => {
   try {
     const result = await recordPurchase(price);
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getPurchaseReport = async (req, res, next) => {
+  try {
+    const report = await getPurchaseReport();
+    res.json(report);
   } catch (err) {
     next(err);
   }

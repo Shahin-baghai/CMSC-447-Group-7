@@ -8,6 +8,15 @@ CREATE TABLE products (
     price DECIMAL(4,2) NOT NULL
 );
 
+-- Table to store application users for authentication
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_salt VARCHAR(64) NOT NULL,
+    password_hash VARCHAR(128) NOT NULL,
+    role VARCHAR(30) NOT NULL DEFAULT 'staff'
+);
+
 -- Table to represent vending machine inventory
 CREATE TABLE machine (
     slot_id VARCHAR(5) PRIMARY KEY,

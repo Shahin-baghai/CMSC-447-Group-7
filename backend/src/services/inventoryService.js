@@ -5,7 +5,7 @@ const calculateStatus = require("../utils/calculateStatus");
 exports.getAllInventory = async () => {
   const query = `
     SELECT 
-      m.slot_id, 
+      m.slot_id AS slotId, 
       p.product_name AS productName, 
       p.price, 
       m.quantity, 
@@ -39,7 +39,7 @@ exports.getMachineInventorySummary = async () => {
 exports.getMachineSlot = async (slotId) => {
   const query = `
     SELECT 
-      m.slot_id, 
+      m.slot_id AS slotId, 
       p.product_name AS productName, 
       p.price, 
       m.quantity, 

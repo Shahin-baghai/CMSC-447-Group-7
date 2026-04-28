@@ -1,5 +1,10 @@
 USE vending_machine;
 
+INSERT INTO users (username, password_salt, password_hash, role)
+VALUES
+('admin', 'e89a639d3f658df31dd23cdf1615bc96', '09a04cd6953d635a421b9647adbdc9b6507d870dcef818c4fa1180873091ba8817f2ccfb8d1e9f939e05b8d7c4f175e22aa4600af5da367cd4c3d094614afaf8', 'admin'),
+('employee1', '408aff3d4bbb60183fe84fabf9eaba52', 'e17e38b5e9d2663a0577980b330b06c6eac5679927fd70e405977f89cfdaf02c1f3c3726bebacebdd842466cfa65e8aba07c4f708de0665c4bc59f9ed1309d68', 'employee');
+
 INSERT INTO products (product_name, price)
 VALUES 
 ('Bic Comfort Pens', 8.50),

@@ -1,4 +1,5 @@
 const db = require("../db");
+const { recordEmployeeRestock } = require("./restockLogService");
 
 // updates machine slot with new product and capacity
 exports.updateMachineSlot = async (slotId, productId, capacity) => {
@@ -8,8 +9,8 @@ exports.updateMachineSlot = async (slotId, productId, capacity) => {
   );
 };
 
-// restocks machine slot by adding quantity and reducing backstock
-exports.restockMachineSlot = async (slotId, quantityAdded) => {
+// adjusts machine quantity and updates backstock in the opposite direction
+exports.adjustMachineSlot = async (slotId, quantityChange, actingUser = null) => {
   const conn = await db.promise().getConnection();
 
   try {
@@ -29,33 +30,63 @@ exports.restockMachineSlot = async (slotId, quantityAdded) => {
 
     const { product_id, quantity, capacity } = rows[0];
 
-    // checks capacity, returns error if restock would exceed capacity
-    if (quantity + quantityAdded > capacity) {
+    // prevents adjusting slots that do not currently have a product assigned
+    if (!product_id) {
+      await conn.rollback();
+      return { error: "Cannot adjust an empty slot" };
+    }
+
+    const nextQuantity = quantity + quantityChange;
+
+    if (nextQuantity < 0) {
+      await conn.rollback();
+      return { error: "Quantity cannot go below 0" };
+    }
+
+    if (nextQuantity > capacity) {
       await conn.rollback();
       return { error: "Exceeds capacity" };
     }
 
-    // checks backstock, returns error if not enough backstock to restock
     const [brows] = await conn.query(
       "SELECT stock FROM backstock WHERE product_id = ?",
       [product_id]
     );
 
-    // if product not found in backstock, return error
-    if (brows[0].stock < quantityAdded) {
+    // if product is missing from backstock or stock is too low, return an error
+    if (brows.length === 0) {
+      await conn.rollback();
+      return { error: "Backstock record not found" };
+    }
+
+    const currentBackstock = brows[0].stock;
+    const nextBackstock = currentBackstock - quantityChange;
+
+    if (nextBackstock < 0) {
       await conn.rollback();
       return { error: "Not enough backstock" };
     }
 
-    // updates machine slot quantity and reduces backstock
     await conn.query(`
       UPDATE machine m
       JOIN backstock b ON m.product_id = b.product_id
       SET m.quantity = m.quantity + ?, b.stock = b.stock - ?
       WHERE m.slot_id = ?
-    `, [quantityAdded, quantityAdded, slotId]);
+    `, [quantityChange, quantityChange, slotId]);
 
     await conn.commit();
+
+    if (actingUser?.role === "employee" && quantityChange > 0) {
+      await recordEmployeeRestock({
+        username: actingUser.username,
+        userId: actingUser.userId,
+        role: actingUser.role,
+        slotId,
+        productId: product_id,
+        quantityAdded: quantityChange,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     return { success: true };
 
@@ -65,4 +96,9 @@ exports.restockMachineSlot = async (slotId, quantityAdded) => {
   } finally {
     conn.release();
   }
+};
+
+// restocks machine slot by adding quantity and reducing backstock
+exports.restockMachineSlot = async (slotId, quantityAdded, actingUser = null) => {
+  return this.adjustMachineSlot(slotId, quantityAdded, actingUser);
 };

@@ -1,59 +1,89 @@
 import { useEffect, useState } from "react";
 
-function BackstockInventory() {
+function BackstockInventory({ authToken }) {
   const [items, setItems] = useState([]);
   const [message, setMessage] = useState("");
   const [restockAmounts, setRestockAmounts] = useState({});
   const [filter, setFilter] = useState("All");
 
   const fetchData = () => {
-    fetch("http://localhost:3001/inventory")
-      .then((res) => res.json())
+    fetch("http://localhost:3001/backstock", {
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || `Inventory request failed (${res.status})`);
+        }
+        return data;
+      })
       .then((data) => {
-        setItems(data.items);
+        const safeItems = Array.isArray(data.items) ? data.items : [];
+        setItems(safeItems);
 
         const initialAmounts = {};
-        data.items.forEach((item) => {
-          initialAmounts[item.slotId] = restockAmounts[item.slotId] ?? "";
+        safeItems.forEach((item) => {
+          initialAmounts[item.productId] = restockAmounts[item.productId] ?? "";
         });
         setRestockAmounts(initialAmounts);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        setMessage(`Could not load backstock: ${err.message}`);
+      });
   };
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [authToken]);
 
-  const handleAmountChange = (slotId, value) => {
+  const handleAmountChange = (productId, value) => {
     setRestockAmounts((prev) => ({
       ...prev,
-      [slotId]: value
+      [productId]: value
     }));
   };
 
-  const handleRestock = (slotId) => {
-    const quantityAdded = Number(restockAmounts[slotId]);
+  const handleRestock = (productId) => {
+    const quantityAdded = Number(restockAmounts[productId]);
 
     if (!quantityAdded || quantityAdded <= 0) {
       setMessage("Please enter a valid restock amount greater than 0.");
       return;
     }
 
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.slotId === slotId
-          ? { ...item, backstock: item.backstock + quantityAdded }
-          : item
-      )
-    );
-
-    setMessage(`Successfully restocked backstock for ${slotId} by ${quantityAdded}.`);
-
-    setRestockAmounts((prev) => ({
-      ...prev,
-      [slotId]: ""
-    }));
+    fetch("http://localhost:3001/backstock/restock", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        productId,
+        quantityAdded
+      })
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || `Backstock restock failed (${res.status})`);
+        }
+        return data;
+      })
+      .then((data) => {
+        setMessage(data.message || `Successfully restocked product ${productId}.`);
+        setRestockAmounts((prev) => ({
+          ...prev,
+          [productId]: ""
+        }));
+        fetchData();
+      })
+      .catch((err) => {
+        console.error(err);
+        setMessage(`Error: ${err.message}`);
+      });
   };
 
   const getBackstockStatus = (backstock) => {
@@ -91,15 +121,15 @@ function BackstockInventory() {
   };
 
   const filteredItems = items.filter((item) => {
-    const status = getBackstockStatus(item.backstock);
+    const status = getBackstockStatus(item.stock);
     if (filter === "All") return true;
     return status === filter;
   });
 
   const summary = {
     totalItems: items.length,
-    lowStockItems: items.filter((item) => item.backstock > 0 && item.backstock <= 5).length,
-    outOfStockItems: items.filter((item) => item.backstock === 0).length
+    lowStockItems: items.filter((item) => item.stock > 0 && item.stock <= 5).length,
+    outOfStockItems: items.filter((item) => item.stock === 0).length
   };
 
   const getFilterButtonStyle = (buttonFilter) => ({
@@ -239,11 +269,11 @@ function BackstockInventory() {
         }}
       >
         {filteredItems.map((item) => {
-          const backstockStatus = getBackstockStatus(item.backstock);
+          const backstockStatus = getBackstockStatus(item.stock);
 
           return (
             <div
-              key={item.slotId}
+              key={item.productId}
               style={{
                 backgroundColor: "white",
                 padding: "1rem",
@@ -252,12 +282,9 @@ function BackstockInventory() {
               }}
             >
               <h3 style={{ marginBottom: "0.5rem" }}>
-                {item.productName} ({item.slotId})
+                {item.productName} (#{item.productId})
               </h3>
-              <p><strong>Price:</strong> ${item.price}</p>
-              <p><strong>Machine Quantity:</strong> {item.quantity}</p>
-              <p><strong>Capacity:</strong> {item.capacity}</p>
-              <p><strong>Backstock:</strong> {item.backstock}</p>
+              <p><strong>Backstock:</strong> {item.stock}</p>
               <p>
                 <strong>Status:</strong>{" "}
                 <span
@@ -276,8 +303,8 @@ function BackstockInventory() {
               <div style={{ marginTop: "1rem" }}>
                 <input
                   type="number"
-                  value={restockAmounts[item.slotId] ?? ""}
-                  onChange={(e) => handleAmountChange(item.slotId, e.target.value)}
+                  value={restockAmounts[item.productId] ?? ""}
+                  onChange={(e) => handleAmountChange(item.productId, e.target.value)}
                   style={{
                     width: "80px",
                     padding: "0.4rem",
@@ -288,7 +315,7 @@ function BackstockInventory() {
                 />
 
                 <button
-                  onClick={() => handleRestock(item.slotId)}
+                  onClick={() => handleRestock(item.productId)}
                   style={{
                     padding: "0.5rem 1rem",
                     borderRadius: "6px",
