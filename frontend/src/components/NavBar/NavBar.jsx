@@ -4,12 +4,7 @@ import './NavBar.css';
 
 import logo from '../../assets/umbc-logo.png';
 
-const NavBar = ( { isLoggedIn, setIsLoggedIn } ) => {
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-    // gonna have to be more stuff here, but this is it for now
-  }
-
+const NavBar = ({ isLoggedIn, currentUser, onLogout }) => {
   return (
     <div className="navbar">
       <img src={logo} alt="UMBC Logo" className="logo" />
@@ -20,23 +15,39 @@ const NavBar = ( { isLoggedIn, setIsLoggedIn } ) => {
             Machine Inventory
           </NavLink>
         </li>
-        <li>
-          <NavLink to="/backstock" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-            Backstock Inventory
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/reports" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-            Reports
-          </NavLink>
-        </li>
-        <li className="login-link">
-          {isLoggedIn ? (
+        {currentUser?.role === "admin" && (
+          <li>
+            <NavLink to="/backstock" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+              Backstock Inventory
+            </NavLink>
+          </li>
+        )}
+        {currentUser?.role === "admin" && (
+          <li>
+            <NavLink to="/reports" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+              Reports
+            </NavLink>
+          </li>
+        )}
+        {currentUser?.role === "admin" && (
+          <li>
             <NavLink to="/settings" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
               Settings
             </NavLink>
+          </li>
+        )}
+        <li className="login-link">
+          {isLoggedIn ? (
+            <>
+              <div className="nav-user">
+                Signed in as <strong>{currentUser?.username}</strong> ({currentUser?.role})
+              </div>
+              <button type="button" className="nav-button" onClick={onLogout}>
+                Logout
+              </button>
+            </>
           ) : (
-            <NavLink to="/settings" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleLogin}>
+            <NavLink to="/login" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
               Login
             </NavLink>
           )}

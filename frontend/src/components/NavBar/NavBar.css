@@ -56,5 +56,27 @@
 }
 
 .login-link {
-    margin-top: auto;
+  margin-top: auto;
+}
+
+.nav-user {
+  padding: 10px;
+  color: #bcbcbc;
+  font-size: 14px;
+}
+
+.nav-button {
+  width: calc(100% - 20px);
+  margin: 0 10px 16px;
+  padding: 10px;
+  border: 1px solid rgba(244, 244, 244, 0.2);
+  border-radius: 8px;
+  background: transparent;
+  color: #f4f4f4;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.nav-button:hover {
+  background-color: rgb(244, 244, 244, 0.12);
 }

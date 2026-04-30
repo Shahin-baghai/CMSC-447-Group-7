@@ -5,9 +5,10 @@ const {
   getMachineInventorySummary, 
   getMachineSlot 
 } = require("../controllers/inventoryController");
+const { requireAuth } = require("../middleware/authMiddleware");
 
-router.get("/", getAllInventory);
-router.get("/summary", getMachineInventorySummary);
-router.get("/:slotId", getMachineSlot);
+router.get("/", requireAuth, getAllInventory);
+router.get("/summary", requireAuth, getMachineInventorySummary);
+router.get("/:slotId", requireAuth, getMachineSlot);
 
 module.exports = router;

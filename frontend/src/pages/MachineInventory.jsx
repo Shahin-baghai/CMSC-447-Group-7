@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-function MachineInventory() {
+function MachineInventory({ authToken, currentUser }) {
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
   const [restockAmounts, setRestockAmounts] = useState({});
@@ -8,28 +8,57 @@ function MachineInventory() {
   const [filter, setFilter] = useState("All");
 
   const fetchData = () => {
-    fetch("http://localhost:3001/inventory")
-      .then((res) => res.json())
+    fetch("http://localhost:3001/inventory", {
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || `Inventory request failed (${res.status})`);
+        }
+        return data;
+      })
       .then((data) => {
-        setItems(data.items);
+        const safeItems = Array.isArray(data.items) ? data.items : [];
+        setItems(safeItems);
 
         const initialAmounts = {};
-        data.items.forEach((item) => {
+        safeItems.forEach((item) => {
           initialAmounts[item.slotId] = restockAmounts[item.slotId] ?? "";
         });
         setRestockAmounts(initialAmounts);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        setItems([]);
+        setSummary(null);
+        setMessage(`Could not load inventory: ${err.message}`);
+      });
 
-    fetch("http://localhost:3001/inventory/summary")
-      .then((res) => res.json())
+    fetch("http://localhost:3001/inventory/summary", {
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || `Summary request failed (${res.status})`);
+        }
+        return data;
+      })
       .then((data) => setSummary(data))
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        setSummary(null);
+      });
   };
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [authToken]);
 
   const getStatusStyles = (status) => {
     if (status === "In Stock") {
@@ -67,39 +96,88 @@ function MachineInventory() {
   };
 
   const handleRestock = (slotId) => {
-    const quantityAdded = Number(restockAmounts[slotId]);
+    const rawValue = restockAmounts[slotId];
+    const quantityAdded = Number(rawValue);
 
-    if (!quantityAdded || quantityAdded <= 0) {
+    if (rawValue === "" || Number.isNaN(quantityAdded) || quantityAdded <= 0) {
       setMessage("Please enter a valid restock amount greater than 0.");
       return;
     }
 
-    fetch("http://localhost:3001/inventory/restock", {
+    fetch("http://localhost:3001/machine/restock", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`
       },
       body: JSON.stringify({
         slotId,
         quantityAdded
       })
     })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.error) {
-          setMessage(`Error: ${data.error}`);
-        } else {
-          setMessage(`Successfully restocked ${slotId} by ${quantityAdded}.`);
-          fetchData();
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || `Restock request failed (${res.status})`);
         }
+        return data;
+      })
+      .then((data) => {
+        setMessage(data.message || `Successfully restocked ${slotId} by ${quantityAdded}.`);
+        setRestockAmounts((prev) => ({
+          ...prev,
+          [slotId]: ""
+        }));
+        fetchData();
       })
       .catch((err) => {
         console.error(err);
-        setMessage("Something went wrong while restocking.");
+        setMessage(`Error: ${err.message}`);
       });
   };
 
-  const filteredItems = items.filter((item) => {
+  const handleAdjust = (slotId, direction) => {
+    const rawValue = restockAmounts[slotId];
+    const amount = Number(rawValue);
+
+    if (rawValue === "" || Number.isNaN(amount) || amount <= 0) {
+      setMessage("Please enter a valid stock adjustment greater than 0.");
+      return;
+    }
+
+    fetch("http://localhost:3001/machine/adjust", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        slotId,
+        quantityChange: direction === "add" ? amount : -amount
+      })
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || `Adjust request failed (${res.status})`);
+        }
+        return data;
+      })
+      .then((data) => {
+        setMessage(data.message || `Successfully adjusted ${slotId}.`);
+        setRestockAmounts((prev) => ({
+          ...prev,
+          [slotId]: ""
+        }));
+        fetchData();
+      })
+      .catch((err) => {
+        console.error(err);
+        setMessage(`Error: ${err.message}`);
+      });
+  };
+
+  const filteredItems = (Array.isArray(items) ? items : []).filter((item) => {
     if (filter === "All") return true;
     return item.status === filter;
   });
@@ -125,6 +203,9 @@ function MachineInventory() {
       <h1 style={{ marginBottom: "1rem" }}>
         UMBC Vending Machine Inventory Dashboard
       </h1>
+      <p style={{ marginTop: 0, color: "#666" }}>
+        Signed in as <strong>{currentUser?.username}</strong> ({currentUser?.role}).
+      </p>
 
       <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap" }}>
         <button onClick={fetchData} style={getFilterButtonStyle("Refresh")}>
@@ -277,6 +358,7 @@ function MachineInventory() {
             <div style={{ marginTop: "1rem" }}>
               <input
                 type="number"
+                min="1"
                 value={restockAmounts[item.slotId] ?? ""}
                 onChange={(e) => handleAmountChange(item.slotId, e.target.value)}
                 style={{
@@ -289,7 +371,7 @@ function MachineInventory() {
               />
 
               <button
-                onClick={() => handleRestock(item.slotId)}
+                onClick={() => handleAdjust(item.slotId, "add")}
                 style={{
                   padding: "0.5rem 1rem",
                   borderRadius: "6px",
@@ -299,7 +381,22 @@ function MachineInventory() {
                   cursor: "pointer"
                 }}
               >
-                Restock
+                Add
+              </button>
+
+              <button
+                onClick={() => handleAdjust(item.slotId, "remove")}
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: "6px",
+                  border: "none",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  cursor: "pointer",
+                  marginLeft: "0.5rem"
+                }}
+              >
+                Remove
               </button>
             </div>
           </div>

@@ -6,6 +6,7 @@ const productRoutes = require("./routes/productRoutes");
 const backstockRoutes = require("./routes/backstockRoutes");
 const machineRoutes = require("./routes/machineRoutes");
 const purchaseRoutes = require("./routes/purchaseRoutes");
+const authRoutes = require("./routes/authRoutes");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -21,6 +22,7 @@ app.use("/products", productRoutes);
 app.use("/backstock", backstockRoutes);
 app.use("/machine", machineRoutes);
 app.use("/purchases", purchaseRoutes);
+app.use("/auth", authRoutes);
 
 // 404 handler
 app.use((req, res) => {

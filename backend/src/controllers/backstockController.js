@@ -33,9 +33,13 @@ exports.restockBackstockItem = async (req, res, next) => {
     return res.status(400).json({ error: "productId and quantityAdded are required" });
   }
 
+  if (typeof quantityAdded !== "number" || quantityAdded <= 0) {
+    return res.status(400).json({ error: "quantityAdded must be a positive number" });
+  }
+
   try {
-    await restockBackstockItem(productId, quantityAdded);
-    res.json({ message: "Backstock restocked successfully" });
+    const item = await restockBackstockItem(productId, quantityAdded);
+    res.json({ message: "Backstock restocked successfully", item });
   } catch (err) {
     next(err);
   }
