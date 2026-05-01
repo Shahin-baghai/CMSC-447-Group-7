@@ -4,14 +4,14 @@ exports.login = async (req, res, next) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
-    return res.status(400).json({ error: "username and password are required" });
+    return res.status(400).json({ error: "email and password are required" });
   }
 
   try {
     const result = await authenticateUser(username, password);
 
     if (!result) {
-      return res.status(401).json({ error: "Invalid username or password" });
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
     res.json(result);

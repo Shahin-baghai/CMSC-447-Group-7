@@ -383,21 +383,6 @@ function MachineInventory({ authToken, currentUser }) {
               >
                 Add
               </button>
-
-              <button
-                onClick={() => handleAdjust(item.slotId, "remove")}
-                style={{
-                  padding: "0.5rem 1rem",
-                  borderRadius: "6px",
-                  border: "none",
-                  backgroundColor: "#dc3545",
-                  color: "white",
-                  cursor: "pointer",
-                  marginLeft: "0.5rem"
-                }}
-              >
-                Remove
-              </button>
             </div>
           </div>
         ))}

@@ -2,6 +2,10 @@ const crypto = require("crypto");
 const db = require("../db");
 
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 8;
+const LOGIN_ALIASES = {
+  "admin1@umbc.edu": "admin",
+  "employee1@umbc.edu": "employee1"
+};
 
 function getAuthSecret() {
   return process.env.AUTH_SECRET || "dev-only-auth-secret";
@@ -79,11 +83,19 @@ function toPublicUser(user) {
 }
 
 exports.authenticateUser = async (username, password) => {
+  const normalizedUsername = username.trim().toLowerCase();
+  const legacyUsername = LOGIN_ALIASES[normalizedUsername];
+  const usernameMatches = legacyUsername
+    ? [normalizedUsername, legacyUsername]
+    : [normalizedUsername];
+
   const [rows] = await db.promise().query(
     `SELECT user_id, username, password_salt, password_hash, role
      FROM users
-     WHERE username = ?`,
-    [username]
+     WHERE username IN (?)
+     ORDER BY username = ? DESC
+     LIMIT 1`,
+    [usernameMatches, normalizedUsername]
   );
 
   if (rows.length === 0) {
