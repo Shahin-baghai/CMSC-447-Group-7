@@ -120,6 +120,25 @@ exports.authenticateUser = async (username, password) => {
   return { user: publicUser, token };
 };
 
+exports.createUser = async ({ username, password, role }) => {
+  const normalizedUsername = String(username).trim().toLowerCase();
+  const normalizedRole = String(role).trim().toLowerCase();
+  const salt = crypto.randomBytes(16).toString("hex");
+  const passwordHash = hashPassword(String(password), salt);
+
+  const [result] = await db.promise().query(
+    `INSERT INTO users (username, password_salt, password_hash, role)
+     VALUES (?, ?, ?, ?)`,
+    [normalizedUsername, salt, passwordHash, normalizedRole]
+  );
+
+  return {
+    userId: result.insertId,
+    username: normalizedUsername,
+    role: normalizedRole
+  };
+};
+
 exports.getUserFromToken = async (token) => {
   const payload = decodeToken(token);
 
