@@ -5,7 +5,11 @@ function BackstockInventory({ authToken }) {
   const [message, setMessage] = useState("");
   const [restockAmounts, setRestockAmounts] = useState({});
   const [filter, setFilter] = useState("All");
-
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newItem, setNewItem] = useState({
+    productName: "",
+    stock: ""
+  });
   const fetchData = () => {
     fetch("http://localhost:3001/backstock", {
       headers: {
@@ -86,6 +90,48 @@ function BackstockInventory({ authToken }) {
       });
   };
 
+const handleAddNewItem = () => {
+  if (!newItem.productName || !newItem.stock) {
+    setMessage("Please fill out all fields.");
+    return;
+  }
+
+  fetch("http://localhost:3001/backstock/add-product", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`
+    },
+    body: JSON.stringify({
+      productName: newItem.productName,
+      stock: Number(newItem.stock)
+    })
+  })
+    .then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || `Add item failed (${res.status})`);
+      }
+
+      return data;
+    })
+    .then((data) => {
+      setMessage(`Added ${newItem.productName} as item #${data.productId}.`);
+
+      setNewItem({
+        productName: "",
+        stock: ""
+      });
+
+      setShowAddForm(false);
+      fetchData();
+    })
+    .catch((err) => {
+      console.error(err);
+      setMessage(`Error: ${err.message}`);
+    });
+};
   const getBackstockStatus = (backstock) => {
     if (backstock === 0) return "Out of Stock";
     if (backstock <= 5) return "Low Stock";
@@ -173,8 +219,88 @@ function BackstockInventory({ authToken }) {
         >
           Out of Stock
         </button>
-      </div>
+        <button
+          onClick={() => setShowAddForm(true)}
+          style={getFilterButtonStyle("Add New Item")}
+      >
+        Add New Item
+     </button>
+    </div>
 
+{showAddForm && (
+  <div
+    style={{
+      backgroundColor: "white",
+      padding: "1rem",
+      marginBottom: "2rem",
+      borderRadius: "10px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+    }}
+  >
+    <h3>Add New Backstock Item</h3>
+
+    <input
+      type="text"
+      placeholder="Product name"
+      value={newItem.productName}
+      onChange={(e) =>
+        setNewItem({ ...newItem, productName: e.target.value })
+      }
+      style={{
+        padding: "0.4rem",
+        marginRight: "0.5rem",
+        borderRadius: "6px",
+        border: "1px solid #ccc"
+      }}
+    />
+
+  
+
+    <input
+      type="number"
+      placeholder="Backstock"
+      value={newItem.stock}
+      onChange={(e) =>
+        setNewItem({ ...newItem, stock: e.target.value })
+      }
+      style={{
+        padding: "0.4rem",
+        marginRight: "0.5rem",
+        borderRadius: "6px",
+        border: "1px solid #ccc"
+      }}
+    />
+
+    <button
+      onClick={handleAddNewItem}
+      style={{
+        padding: "0.5rem 1rem",
+        borderRadius: "6px",
+        border: "none",
+        backgroundColor: "#28a745",
+        color: "white",
+        cursor: "pointer",
+        marginRight: "0.5rem"
+      }}
+    >
+      Save
+    </button>
+
+    <button
+      onClick={() => setShowAddForm(false)}
+      style={{
+        padding: "0.5rem 1rem",
+        borderRadius: "6px",
+        border: "none",
+        backgroundColor: "#e0e0e0",
+        color: "#333",
+        cursor: "pointer"
+      }}
+    >
+      Cancel
+    </button>
+  </div>
+)}
       {message && (
         <div
           style={{

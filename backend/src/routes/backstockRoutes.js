@@ -3,12 +3,13 @@ const router = express.Router();
 const { 
   getBackstockInventory, 
   getBackstockItem, 
-  restockBackstockItem 
+  restockBackstockItem, 
+  addBackstockProduct
 } = require("../controllers/backstockController");
 const { requireAuth, requireRole } = require("../middleware/authMiddleware");
 
 router.get("/", requireAuth, requireRole("admin"), getBackstockInventory);
-router.get("/:productId", requireAuth, requireRole("admin"), getBackstockItem);
 router.post("/restock", requireAuth, requireRole("admin"), restockBackstockItem);
-
+router.post("/add-product", requireAuth, requireRole("admin"), addBackstockProduct);
+router.get("/:productId", requireAuth, requireRole("admin"), getBackstockItem);
 module.exports = router;
