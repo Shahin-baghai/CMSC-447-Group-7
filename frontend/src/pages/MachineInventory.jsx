@@ -355,7 +355,7 @@ function MachineInventory({ authToken, currentUser }) {
               </span>
             </p>
 
-            <div style={{ marginTop: "1rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "1rem" }}>
               <input
                 type="number"
                 min="1"
@@ -382,6 +382,20 @@ function MachineInventory({ authToken, currentUser }) {
                 }}
               >
                 Add
+              </button>
+
+              <button
+                onClick={() => handleAdjust(item.slotId, "remove")}
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: "6px",
+                  border: "none",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  cursor: "pointer"
+                }}
+              >
+                Remove
               </button>
             </div>
           </div>
