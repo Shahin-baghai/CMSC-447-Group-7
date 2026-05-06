@@ -1,4 +1,4 @@
-const { authenticateUser, createUser } = require("../services/authService");
+const { authenticateUser, createUser, getAccountOverview } = require("../services/authService");
 const { recordActivity } = require("../services/restockLogService");
 
 exports.login = async (req, res, next) => {
@@ -24,6 +24,15 @@ exports.login = async (req, res, next) => {
 exports.getCurrentUser = async (req, res, next) => {
   try {
     res.json({ user: req.user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getAccounts = async (req, res, next) => {
+  try {
+    const overview = await getAccountOverview();
+    res.json(overview);
   } catch (err) {
     next(err);
   }

@@ -139,6 +139,26 @@ exports.createUser = async ({ username, password, role }) => {
   };
 };
 
+exports.getAccountOverview = async () => {
+  const [rows] = await db.promise().query(
+    `SELECT user_id, username, role
+     FROM users
+     WHERE role IN ('admin', 'employee')
+     ORDER BY role ASC, username ASC`
+  );
+
+  const accounts = rows.map(toPublicUser);
+
+  return {
+    summary: {
+      total: accounts.length,
+      admins: accounts.filter((account) => account.role === "admin").length,
+      employees: accounts.filter((account) => account.role === "employee").length
+    },
+    accounts
+  };
+};
+
 exports.getUserFromToken = async (token) => {
   const payload = decodeToken(token);
 
