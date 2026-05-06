@@ -3,6 +3,7 @@ const {
   addProduct,
   updateProduct
 } = require("../services/productService");
+const { recordActivity } = require("../services/restockLogService");
 
 // gets all products
 exports.getAllProducts = async (req, res, next) => {
@@ -23,6 +24,20 @@ exports.addProduct = async (req, res, next) => {
 
   try {
     const productId = await addProduct(product_name, price);
+    await recordActivity({
+      actingUser: req.user,
+      actionType: "product_added",
+      summary: `${req.user.username} added product ${product_name}`,
+      target: {
+        type: "product",
+        id: productId
+      },
+      details: {
+        productId,
+        productName: product_name,
+        price
+      }
+    });
     res.status(201).json({ message: "Product added", productId });
   } catch (err) {
     next(err);
@@ -38,6 +53,20 @@ exports.updateProduct = async (req, res, next) => {
 
   try {
     await updateProduct(productId, product_name, price);
+    await recordActivity({
+      actingUser: req.user,
+      actionType: "product_updated",
+      summary: `${req.user.username} updated product #${productId}`,
+      target: {
+        type: "product",
+        id: productId
+      },
+      details: {
+        productId,
+        productName: product_name,
+        price
+      }
+    });
     res.json({ message: "Product updated" });
   } catch (err) {
     next(err);

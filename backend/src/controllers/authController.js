@@ -1,4 +1,5 @@
 const { authenticateUser, createUser } = require("../services/authService");
+const { recordActivity } = require("../services/restockLogService");
 
 exports.login = async (req, res, next) => {
   const { username, password } = req.body;
@@ -47,6 +48,19 @@ exports.createAccount = async (req, res, next) => {
 
   try {
     const user = await createUser({ username, password, role });
+    await recordActivity({
+      actingUser: req.user,
+      actionType: "account_created",
+      summary: `${req.user.username} created ${user.role} account ${user.username}`,
+      target: {
+        type: "user-account",
+        id: user.userId
+      },
+      details: {
+        createdUsername: user.username,
+        createdRole: user.role
+      }
+    });
     res.status(201).json({ user });
   } catch (err) {
     if (err.code === "ER_DUP_ENTRY") {

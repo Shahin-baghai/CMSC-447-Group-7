@@ -3,6 +3,7 @@ const {
   getBackstockItem,
   restockBackstockItem
 } = require("../services/backstockService");
+const { recordActivity } = require("../services/restockLogService");
 
 // gets all backstock items with product details
 exports.getBackstockInventory = async (req, res, next) => {
@@ -39,6 +40,21 @@ exports.restockBackstockItem = async (req, res, next) => {
 
   try {
     const item = await restockBackstockItem(productId, quantityAdded);
+    await recordActivity({
+      actingUser: req.user,
+      actionType: "backstock_restocked",
+      summary: `${req.user.username} restocked backstock product #${item.productId} by ${quantityAdded}`,
+      target: {
+        type: "backstock-product",
+        id: item.productId
+      },
+      details: {
+        productId: item.productId,
+        productName: item.productName,
+        quantityAdded,
+        stock: item.stock
+      }
+    });
     res.json({ message: "Backstock restocked successfully", item });
   } catch (err) {
     next(err);
