@@ -43,6 +43,7 @@ function Reports({ authToken }) {
     purchasesToday: 0,
     revenueToday: 0
   };
+  const activityLogs = report?.activityLogs || report?.employeeRestocks || [];
 
   const formatCurrency = (value) =>
     Number(value || 0).toLocaleString("en-US", {
@@ -213,9 +214,9 @@ function Reports({ authToken }) {
             )}
           </Panel>
 
-          <Panel title="Employee Restock Log">
-            {report?.employeeRestocks?.length ? (
-              report.employeeRestocks.map((entry, index) => (
+          <Panel title="Activity Log">
+            {activityLogs.length ? (
+              activityLogs.map((entry, index) => (
                 <div
                   key={`${entry.timestamp}-${entry.userId || index}`}
                   style={{
@@ -224,24 +225,87 @@ function Reports({ authToken }) {
                   }}
                 >
                   <div style={{ fontWeight: "bold" }}>
-                    {entry.username} restocked slot {entry.slotId}
+                    {getActivitySummary(entry)}
                   </div>
                   <div style={{ color: "#666", marginTop: "0.25rem" }}>
-                    Quantity added: {entry.quantityAdded} | Product ID: {entry.productId}
+                    {getActivityDetails(entry)}
                   </div>
                   <div style={{ color: "#666", marginTop: "0.25rem" }}>
-                    {new Date(entry.timestamp).toLocaleString("en-US")}
+                    {formatTimestamp(entry.timestamp)}
                   </div>
                 </div>
               ))
             ) : (
-              <EmptyState text="No employee restocks logged yet." />
+              <EmptyState text="No activity logged yet." />
             )}
           </Panel>
         </div>
       )}
     </div>
   );
+}
+
+function getActivitySummary(entry) {
+  if (entry.summary) {
+    return entry.summary;
+  }
+
+  if (entry.slotId && entry.quantityAdded !== undefined) {
+    return `${entry.username} restocked slot ${entry.slotId}`;
+  }
+
+  return `${entry.username || "Unknown user"} recorded ${formatActionType(entry.actionType)}`;
+}
+
+function getActivityDetails(entry) {
+  if (entry.slotId && entry.quantityAdded !== undefined) {
+    return `Quantity added: ${entry.quantityAdded} | Product ID: ${entry.productId}`;
+  }
+
+  if (entry.details?.createdUsername) {
+    return `Account: ${entry.details.createdUsername} | Role: ${entry.details.createdRole}`;
+  }
+
+  if (entry.details?.quantityChange !== undefined) {
+    return `Quantity change: ${entry.details.quantityChange} | Product ID: ${entry.details.productId}`;
+  }
+
+  if (entry.details?.quantityAdded !== undefined) {
+    return `Quantity added: ${entry.details.quantityAdded}`;
+  }
+
+  if (entry.details?.productName) {
+    const price = entry.details.price !== undefined ? ` | Price: $${entry.details.price}` : "";
+    return `Product: ${entry.details.productName}${price}`;
+  }
+
+  if (entry.target?.type && entry.target?.id !== undefined) {
+    return `${entry.target.type}: ${entry.target.id}`;
+  }
+
+  return formatActionType(entry.actionType);
+}
+
+function formatActionType(actionType) {
+  if (!actionType) {
+    return "activity";
+  }
+
+  return actionType.replace(/_/g, " ");
+}
+
+function formatTimestamp(value) {
+  if (!value) {
+    return "N/A";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "N/A";
+  }
+
+  return date.toLocaleString("en-US");
 }
 
 function ReportCard({ title, value, accent }) {

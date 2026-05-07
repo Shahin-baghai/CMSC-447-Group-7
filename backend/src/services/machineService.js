@@ -1,17 +1,59 @@
 const db = require("../db");
-const { recordEmployeeRestock } = require("./restockLogService");
+const { recordActivity } = require("./restockLogService");
 
 // updates machine slot with new product and capacity
-exports.updateMachineSlot = async (slotId, productId, capacity) => {
-  await db.promise().query(
-    "UPDATE machine SET product_id = ?, capacity = ? WHERE slot_id = ?",
-    [productId, capacity, slotId]
+exports.updateMachineSlot = async (slotId, { productId, quantity, capacity }) => {
+  const fields = [];
+  const values = [];
+
+  if (productId !== undefined) {
+    fields.push("product_id = ?");
+    values.push(productId || null);
+  }
+
+  if (quantity !== undefined) {
+    fields.push("quantity = ?");
+    values.push(quantity);
+  }
+
+  if (capacity !== undefined) {
+    fields.push("capacity = ?");
+    values.push(capacity);
+  }
+
+  if (fields.length === 0) {
+    return { error: "No updates provided" };
+  }
+
+  values.push(slotId);
+
+  const [result] = await db.promise().query(
+    `UPDATE machine SET ${fields.join(", ")} WHERE slot_id = ?`,
+    values
   );
+
+  if (result.affectedRows === 0) {
+    return { error: "Slot not found" };
+  }
+
+  const [rows] = await db.promise().query(
+    `SELECT
+      slot_id AS slotId,
+      product_id AS productId,
+      quantity,
+      capacity
+     FROM machine
+     WHERE slot_id = ?`,
+    [slotId]
+  );
+
+  return rows[0];
 };
 
 // adjusts machine quantity and updates backstock in the opposite direction
 exports.adjustMachineSlot = async (slotId, quantityChange, actingUser = null) => {
   const conn = await db.promise().getConnection();
+  let activityEntry = null;
 
   try {
     await conn.beginTransaction();
@@ -76,19 +118,27 @@ exports.adjustMachineSlot = async (slotId, quantityChange, actingUser = null) =>
 
     await conn.commit();
 
-    if (actingUser?.role === "employee" && quantityChange > 0) {
-      await recordEmployeeRestock({
-        username: actingUser.username,
-        userId: actingUser.userId,
-        role: actingUser.role,
-        slotId,
-        productId: product_id,
-        quantityAdded: quantityChange,
-        timestamp: new Date().toISOString()
-      });
-    }
+    if (actingUser) {
+      const amount = Math.abs(quantityChange);
+      const direction = quantityChange > 0 ? "added" : "removed";
 
-    return { success: true };
+      activityEntry = {
+        actingUser,
+        actionType: quantityChange > 0 ? "machine_stock_added" : "machine_stock_removed",
+        summary: `${actingUser.username} ${direction} ${amount} items ${quantityChange > 0 ? "to" : "from"} slot ${slotId}`,
+        target: {
+          type: "machine-slot",
+          id: slotId
+        },
+        details: {
+          slotId,
+          productId: product_id,
+          quantityChange,
+          previousQuantity: quantity,
+          nextQuantity
+        }
+      };
+    }
 
   } catch (err) {
     await conn.rollback();
@@ -96,6 +146,12 @@ exports.adjustMachineSlot = async (slotId, quantityChange, actingUser = null) =>
   } finally {
     conn.release();
   }
+
+  if (activityEntry) {
+    await recordActivity(activityEntry);
+  }
+
+  return { success: true };
 };
 
 // restocks machine slot by adding quantity and reducing backstock

@@ -1,5 +1,5 @@
 const db = require("../db");
-const { getEmployeeRestockLogs } = require("./restockLogService");
+const { getActivityLogs } = require("./restockLogService");
 
 // records a purchase by decrementing machine quantity and inserting purchase record
 exports.recordPurchase = async (price) => {
@@ -109,7 +109,7 @@ exports.getPurchaseReport = async () => {
     LIMIT 10
   `);
 
-  const employeeRestocks = await getEmployeeRestockLogs(20);
+  const activityLogs = await getActivityLogs(20);
 
   return {
     summary: summaryRows[0],
@@ -117,6 +117,7 @@ exports.getPurchaseReport = async () => {
     recentPurchases,
     dailySales,
     inventoryAlerts,
-    employeeRestocks
+    activityLogs,
+    employeeRestocks: activityLogs
   };
 };

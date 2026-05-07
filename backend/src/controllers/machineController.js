@@ -3,11 +3,12 @@ const {
   restockMachineSlot,
   updateMachineSlot
 } = require("../services/machineService");
+const { recordActivity } = require("../services/restockLogService");
 
 // updates machine slot with new product and capacity
 exports.updateMachineSlot = async (req, res, next) => {
   const { slotId, productId, quantity, capacity } = req.body;
-  if (!slotId || (!productId && quantity === undefined && capacity === undefined)) {
+  if (!slotId || (productId === undefined && quantity === undefined && capacity === undefined)) {
     return res.status(400).json({ 
       error: "slotId is required and at least one of productId, quantity, or capacity must be provided"
     });
@@ -16,6 +17,22 @@ exports.updateMachineSlot = async (req, res, next) => {
   try {
     const updatedSlot = await updateMachineSlot(slotId, { productId, quantity, capacity });
     if (updatedSlot.error) return res.status(404).json({ error: updatedSlot.error });
+    await recordActivity({
+      actingUser: req.user,
+      actionType: "machine_slot_updated",
+      summary: `${req.user.username} updated machine slot ${slotId}`,
+      target: {
+        type: "machine-slot",
+        id: slotId
+      },
+      details: {
+        slotId,
+        productId,
+        quantity,
+        capacity,
+        updatedSlot
+      }
+    });
     res.json({ message: "Machine slot updated", item: updatedSlot });
   } catch (err) {
     next(err);

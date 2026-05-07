@@ -355,7 +355,7 @@ function MachineInventory({ authToken, currentUser }) {
               </span>
             </p>
 
-            <div style={{ marginTop: "1rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "1rem" }}>
               <input
                 type="number"
                 min="1"
@@ -392,8 +392,7 @@ function MachineInventory({ authToken, currentUser }) {
                   border: "none",
                   backgroundColor: "#dc3545",
                   color: "white",
-                  cursor: "pointer",
-                  marginLeft: "0.5rem"
+                  cursor: "pointer"
                 }}
               >
                 Remove

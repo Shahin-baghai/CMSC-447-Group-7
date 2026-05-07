@@ -74,10 +74,10 @@ function Login({ isAuthenticated, onLogin }) {
         </h1>
 
         <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "bold" }}>
-          Username
+          Email
         </label>
         <input
-          type="text"
+          type="email"
           value={username}
           onChange={(event) => setUsername(event.target.value)}
           required
@@ -139,7 +139,7 @@ function Login({ isAuthenticated, onLogin }) {
         </button>
 
         <p style={{ marginTop: "1rem", marginBottom: 0, color: "#666" }}>
-          Seeded demo credentials: <strong>admin</strong> / <strong>admin123</strong> or <strong>employee1</strong> / <strong>employee123</strong>
+          Seeded demo credentials: <strong>admin1@umbc.edu</strong> / <strong>admin123</strong> or <strong>employee1@umbc.edu</strong> / <strong>employee123</strong>
         </p>
       </form>
     </div>

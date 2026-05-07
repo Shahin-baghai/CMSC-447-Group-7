@@ -125,7 +125,7 @@ const App = () => {
                 currentUser={currentUser}
                 allowedRoles={["admin"]}
               >
-                <Settings currentUser={currentUser} />
+                <Settings currentUser={currentUser} authToken={authToken} />
               </ProtectedRoute>
             }
           />
