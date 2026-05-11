@@ -48,10 +48,14 @@ exports.restockBackstockItem = async (req, res, next) => {
 
 // creates a new product and adds it to backstock
 exports.addBackstockProduct = async (req, res, next) => {
-  const { productName, stock } = req.body;
+  const { productName, price, stock } = req.body;
 
-  if (!productName || stock === undefined) {
-    return res.status(400).json({ error: "productName and stock are required" });
+  if (!productName || price === undefined || stock === undefined) {
+    return res.status(400).json({ error: "productName, price, and stock are required" });
+  }
+
+  if (typeof price !== "number" || price < 0) {
+    return res.status(400).json({ error: "price must be 0 or greater" });
   }
 
   if (typeof stock !== "number" || stock < 0) {
@@ -59,7 +63,7 @@ exports.addBackstockProduct = async (req, res, next) => {
   }
 
   try {
-    const result = await addBackstockProduct(productName, stock);
+    const result = await addBackstockProduct(productName, price, stock);
     res.json(result);
   } catch (err) {
     next(err);
