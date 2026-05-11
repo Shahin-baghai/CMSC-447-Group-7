@@ -8,6 +8,7 @@ function BackstockInventory({ authToken }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState({
     productName: "",
+    price: "",
     stock: ""
   });
   const fetchData = () => {
@@ -91,7 +92,7 @@ function BackstockInventory({ authToken }) {
   };
 
 const handleAddNewItem = () => {
-  if (!newItem.productName || !newItem.stock) {
+  if (!newItem.productName || !newItem.price || !newItem.stock) {
     setMessage("Please fill out all fields.");
     return;
   }
@@ -104,6 +105,7 @@ const handleAddNewItem = () => {
     },
     body: JSON.stringify({
       productName: newItem.productName,
+      price: Number(newItem.price),
       stock: Number(newItem.stock)
     })
   })
@@ -121,6 +123,7 @@ const handleAddNewItem = () => {
 
       setNewItem({
         productName: "",
+        price: "",
         stock: ""
       });
 
@@ -253,8 +256,20 @@ const handleAddNewItem = () => {
         border: "1px solid #ccc"
       }}
     />
-
-  
+    <input
+      type="number"
+      placeholder="Price"
+      value={newItem.price}
+      onChange={(e) =>
+        setNewItem({ ...newItem, price: e.target.value })
+    } 
+    style={{
+      padding: "0.4rem",
+      marginRight: "0.5rem",
+      borderRadius: "6px",
+      border: "1px solid #ccc"
+    }}
+/>
 
     <input
       type="number"

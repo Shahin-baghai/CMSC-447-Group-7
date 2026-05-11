@@ -42,11 +42,11 @@ exports.restockBackstockItem = async (productId, quantityAdded) => {
   return this.getBackstockItem(productId);
 };
 
-exports.addBackstockProduct = async (productName, stock) => {
+exports.addBackstockProduct = async (productName, price, stock) => {
   const [productResult] = await db.promise().query(
     `INSERT INTO products (product_name, price)
      VALUES (?, ?)`,
-    [productName, 0.00]
+    [productName, price]
   );
 
   const productId = productResult.insertId;
